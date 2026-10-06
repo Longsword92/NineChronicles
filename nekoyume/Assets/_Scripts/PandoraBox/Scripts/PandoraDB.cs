@@ -10,10 +10,6 @@ namespace Nekoyume.PandoraBox
     {
         public static string DBPath;
 
-        public static IEnumerator GetDatabase()
-        {
-            
-        }
 
         public static string URLAntiCacheRandomizer(string url)
         {
@@ -73,6 +69,20 @@ namespace Nekoyume.PandoraBox
                 return false;
             }
         }
+    }
+
+    [System.Serializable]
+    public class StatisticValue
+    {
+        public string StatisticName;
+        public int Value;
+    }
+
+    [System.Serializable]
+    public class ItemInstance
+    {
+        public string ItemID;
+        public int Count;
     }
 
     [System.Serializable]

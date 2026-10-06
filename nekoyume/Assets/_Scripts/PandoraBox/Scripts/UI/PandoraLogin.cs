@@ -64,42 +64,30 @@ namespace Nekoyume
             foreach (var accountSlot in PandoraAccounts)
                 accountSlot.CheckSelect();
 
-            // Show the appropriate UI group based on whether the selected account has an email address or not
-            if (string.IsNullOrEmpty(PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.Email))
-            {
-                pandoraSignupGroup.SetActive(true);
-                pandoraLoginGroup.SetActive(false);
-            }
-            else
-            {
-                // Populate the email and remember toggle fields with the values from the selected account
-                pandoraLoginEmailField.text =
-                    PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.Email;
-                pandoraLoginRememberToggle.isOn =
-                    PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.IsRemember;
+            // Populate the email and remember toggle fields with the values from the selected account
+            pandoraLoginEmailField.text =
+                PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.Email;
+            pandoraLoginRememberToggle.isOn =
+                PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.IsRemember;
 
-                // Set the password field to the saved password if the remember toggle is on, or an empty string otherwise
-                pandoraLoginPasswordField.text =
-                    PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.Password;
+            // Set the password field to the saved password if the remember toggle is on, or an empty string otherwise
+            pandoraLoginPasswordField.text =
+                PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.Password;
 
-                // Show the login group and hide the sign-up group
-                pandoraSignupGroup.SetActive(false);
-                pandoraLoginGroup.SetActive(true);
-            }
+            // Show the login group and hide the sign-up group
+            pandoraSignupGroup.SetActive(false);
+            pandoraLoginGroup.SetActive(true);
         }
 
 
+        void PandoraSignupClick()
+        {
+            GetPandoraUserData(pandoraSignup9cAddressField.text, pandoraSignupEmailField.text,
+                pandoraSignupPasswordField.text, true);
+        }
+
         void PandoraLoginClick()
         {
-            // Check if the password is at least 6 characters long
-            if (pandoraLoginPasswordField.text.Length < 6)
-            {
-                // Show a system notification alert and return if the password is less than 6 characters
-                PandoraUtil.ShowSystemNotification("The password should be at least 6 characters long.",
-                    NotificationCell.NotificationType.Alert);
-                return;
-            }
-
             // hide the login group
             pandoraLoginGroup.SetActive(false);
 
@@ -107,6 +95,8 @@ namespace Nekoyume
                                         NotificationCell.NotificationType.Information);
             pandoraLoginGroup.SetActive(true);
             nineLoginGroup.SetActive(false);
+
+            GetPandoraUserData("123", pandoraLoginEmailField.text, pandoraLoginPasswordField.text, false);
         }
 
         void GetPandoraUserData(string username, string email, string password, bool isSignUp)
@@ -116,31 +106,16 @@ namespace Nekoyume
             slot.Username = username;
             slot.Email = email;
             slot.Password = password;
-            slot.IsRemember = pandoraLoginRememberToggle.isOn;
+            slot.IsRemember = true;
             PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SaveData();
             isAuth = true;
-
-            if (isSignUp)
-            {
-                // Set the email and password fields in the login screen with the values entered in the signup screen
-                pandoraLoginEmailField.text = email;
-                pandoraLoginPasswordField.text = password;
-            }
 
             // Set the signup and login groups to inactive
             pandoraSignupGroup.SetActive(false);
             pandoraLoginGroup.SetActive(false);
 
             // Look up the address and password for the newly registered user from the key store
-            currentPPK = null;
-            for (int i = 0; i < KeyStore.List().Count(); i++)
-                if (KeyStore.List().ElementAt(i).Item2.Address.ToString().Substring(2, 20).ToLower() ==
-                    username.ToLower())
-                {
-                    currentPPK = KeyStore.List().ElementAt(i);
-                    break;
-                }
-
+            currentPPK = KeyStore.List().ElementAt(PandoraMaster.SelectedLoginAccountIndex);
 
             // If a key store entry is found, get the password and update the widget; otherwise, show an error message
             if (currentPPK is null)
@@ -153,7 +128,7 @@ namespace Nekoyume
             }
 
             // Set the remember toggle state for the 9c login info widget
-            nineLoginRememberToggle.isOn = slot.IsAutoLogin;
+            nineLoginRememberToggle.isOn = true;
 
             nineLoginGroup.SetActive(true);
             // Update the 9c login info widget with the address and password
@@ -162,12 +137,6 @@ namespace Nekoyume
 
         public PrivateKey GetKey(string accountPassword)
         {
-            // Check if there is valid playfab authentication before dealing with the key store
-            if (!isAuth)
-            {
-                return null;
-            }
-
             // Get the protected private key from the key store object
             currentPPK.Deconstruct(out Guid keyId, out ProtectedPrivateKey ppk);
 

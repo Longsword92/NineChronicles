@@ -12,7 +12,7 @@ using Nekoyume.State;
 using System.Threading.Tasks;
 using Nekoyume.Helper;
 using System.Web;
-using Libplanet;
+using Libplanet.Crypto;
 
 namespace Nekoyume.PandoraBox
 {
@@ -127,14 +127,6 @@ namespace Nekoyume.PandoraBox
                 : "20";
             CountTxt.text = $"Members {selectedGuildPlayers.Count}/{maxCount}";
 
-            //boosters
-            int boosters = 0;
-            foreach (GuildPlayer selectedGuildPlayer in selectedGuildPlayers)
-                if (Premium.CheckPremium(new Address(selectedGuildPlayer.Address)))
-                    boosters++;
-
-            BoostTxt.text = $"<color=green>+{boosters}</color>";
-
             //members details
             GG(selectedGuildPlayers);
         }
@@ -178,80 +170,13 @@ namespace Nekoyume.PandoraBox
         async Task<string> GetMemberListState(List<GuildPlayer> selectedGuildPlayers)
         {
             string membersText = "";
-            List<playerRecord> gList = new List<playerRecord>();
-
-            int totalCP = 0;
-            int totalLevel = 0;
-            foreach (GuildPlayer member in selectedGuildPlayers)
-            {
-                if (string.IsNullOrEmpty(member.AvatarAddress))
-                {
-                    gList.Add(new playerRecord(member.Rank, 0, 0,
-                        "(<color=red>!</color>)" + member.Address.Substring(0, 6).ToLower(),
-                        new Address(member.Address)));
-                    continue;
-                }
-
-                var (exist, avatarState) =
-                    await States.TryGetAvatarStateAsync(
-                        new Libplanet.Address(member.AvatarAddress.Substring(2).ToLower()));
-                if (!exist)
-                    gList.Add(new playerRecord(member.Rank, 0, 0,
-                        "(<color=red>!</color>)" + member.Address.Substring(0, 6).ToLower(),
-                        new Address(member.Address)));
-                else
-                {
-                    gList.Add(new playerRecord(member.Rank, avatarState.level, 100, avatarState.name,
-                        new Address(member.Address))); //avatarState.GetCP()
-                    totalCP += 100;
-                    totalLevel += avatarState.level;
-                }
-            }
-
-            //((sum level members * 0.8)/num members) + (0.5*sum of CP)
-            TotalCPTxt.text = ((int)((totalLevel * 0.8f) / gList.Count + (0.5f * totalCP))).ToString();
-
-            //fill leader
-            playerRecord leader = gList.Find(x => x.Rank == 100);
-            membersText += "-= <color=green> LEADER </color> =-";
-            membersText += GetMemberName(leader);
-            gList.Remove(leader);
-
-            //Officers
-            List<playerRecord> Officers = gList.FindAll(x => x.Rank == 50);
-            if (Officers is null || Officers.Count == 0)
-            {
-            }
-            else
-            {
-                membersText += "\n-= <color=green> Officers </color> =-";
-                Officers.Sort((a, b) => b.Level.CompareTo(a.Level));
-                foreach (playerRecord member in Officers)
-                {
-                    membersText += GetMemberName(member);
-                }
-
-                gList.RemoveAll(x => x.Rank == 50);
-            }
-
-            membersText += "\n";
-            membersText += "\n- <color=green> Members </color> -";
-            gList.Sort((a, b) => b.Level.CompareTo(a.Level));
-            foreach (playerRecord member in gList)
-            {
-                membersText += GetMemberName(member);
-            }
 
             return membersText;
         }
 
         string GetMemberName(playerRecord member)
         {
-            if (Premium.CheckPremium(member.Address))
-                return $"\n<color=green>{member.Level}</color=#FF7800> " + member.Name +
-                       "  <sprite name=UI_main_icon_star>\n"; // "\U0001F601" + "\n";
-            else
-                return $"\n<color=green>{member.Level}</color> " + member.Name + "\n";
+            return $"\n<color=green>{member.Level}</color> " + member.Name + "\n";
         }
 
         public void ContactGuild()

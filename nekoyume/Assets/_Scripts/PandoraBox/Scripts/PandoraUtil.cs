@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
-using Libplanet;
+using Libplanet.Action.State;
+using Libplanet.Crypto;
 using Nekoyume.Extensions;
 using Nekoyume.Game;
 using Nekoyume.Model.Item;
@@ -104,7 +105,7 @@ namespace Nekoyume.PandoraBox
 
             try
             {
-                var state = await Game.Game.instance.Agent.GetStateAsync(address);
+                var state = await Game.Game.instance.Agent.GetStateAsync(ReservedAddresses.LegacyAccount, address);
                 if (state is Bencodex.Types.Dictionary dictionary)
                 {
                     var itemBaseN = ItemFactory.Deserialize(dictionary);

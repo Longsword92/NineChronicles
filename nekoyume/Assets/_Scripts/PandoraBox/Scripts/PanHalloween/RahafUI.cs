@@ -25,11 +25,9 @@ public class RahafUI : MonoBehaviour
         {
             int HalloweenCooldown = PlayerPrefs.GetInt("_PandoraBox_Halloween_NextCooldown");
             float value = HalloweenCooldown - Game.instance.Agent.BlockIndex;
-            var time = Util.GetBlockToTime((int)value);
             if (value > 0)
             {
                 StartButton.interactable = false;
-                startText.text = "Wait (" + time + ")";
             }
             else
             {

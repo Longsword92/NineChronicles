@@ -70,15 +70,12 @@ namespace Nekoyume.PandoraBox
                 Instance = this;
                 Settings = new PandoraSettings();
                 Settings.Load();
-                StartCoroutine(PandoraDB.GetDatabase());
-                StartCoroutine(Premium.PANDORA_ProcessQueueWebHook());
             }
         }
 
         public void ShowError(int errorNumber)
         {
-            Widget.Find<PandoraError>().Show($"Error <color=red>{errorNumber}</color>!",
-                PandoraUtil.GetNotificationText(errorNumber));
+            
         }
     }
 

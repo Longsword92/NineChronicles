@@ -47,8 +47,6 @@ namespace Nekoyume
             if (Premium.PandoraProfile.Currencies[CurrencySTR] < ItemPrice)
                 return;
 
-            Game.Game.instance.Runner.SelectedUtilitie = this;
-            Game.Game.instance.Runner.RunnerUI.FeaturesUICooldown = 0;
         }
 
         public void CheckAvailability()
