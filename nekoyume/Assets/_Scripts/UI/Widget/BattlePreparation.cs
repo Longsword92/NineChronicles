@@ -308,6 +308,11 @@ namespace Nekoyume.UI
                     rectTransform = (RectTransform)secondCell.transform
                 });
             }
+
+            foreach (var item in winStarTexts)
+            {
+                item.text = "?";
+            }
         }
 
         private long? UpdateCp()

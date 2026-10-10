@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Lib9c.Model.Order;
+using Libplanet.Crypto;
 using Nekoyume.EnumType;
 using Nekoyume.Game.Character;
 using Nekoyume.Game.Controller;
@@ -13,11 +14,13 @@ using Nekoyume.State;
 using Nekoyume.UI.Model;
 using Nekoyume.UI.Module;
 using Nekoyume.UI.Scroller;
+using TMPro;
 using UnityEngine;
 using ShopItem = Nekoyume.UI.Model.ShopItem;
 
 namespace Nekoyume.UI
 {
+    using Nekoyume.PandoraBox;
     using System.Collections;
     using UniRx;
     using UnityEngine.UI;
@@ -62,6 +65,9 @@ namespace Nekoyume.UI
         private System.Action _onClose;
         private System.Action _onBlocked;
         private System.Action _onEnhancement;
+
+        ItemBase currentItemBase; //for copy item info
+        
 
         public bool _isPointerOnTooltipArea;
         public bool _isClickedTooltipArea;
@@ -113,6 +119,21 @@ namespace Nekoyume.UI
             }
         }
 
+        //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+        protected override void Update()
+        {
+            base.Update();
+
+            if (Input.GetKeyDown(KeyCode.I))
+            {
+                States.Instance.CurrentAvatarState.inventory.AddItem(currentItemBase);
+                OneLineSystem.Push(MailType.System,
+                    "<color=green>Pandora Box</color>: Item Added to your inventory Successfully!",
+                    NotificationCell.NotificationType.Information);
+            }
+
+        }
+
         public override void Close(bool ignoreCloseAnimation = false)
         {
             _onClose?.Invoke();
@@ -147,6 +168,7 @@ namespace Nekoyume.UI
             _onSubmit = onSubmit;
             _onClose = onClose;
             _onBlocked = onBlocked;
+            currentItemBase = item;
 
             scrollbar.value = 1f;
             base.Show();
@@ -180,6 +202,7 @@ namespace Nekoyume.UI
             _onBlocked = onBlocked;
             _onEnhancement = onEnhancement;
             enhancementButton.gameObject.SetActive(onEnhancement != null);
+            currentItemBase = item.ItemBase;
 
             scrollbar.value = 1f;
             base.Show();
@@ -233,6 +256,7 @@ namespace Nekoyume.UI
                 (item.ItemBase.ItemType == ItemType.Equipment ||
                     item.ItemBase.ItemType == ItemType.Costume));
             _onClose = onClose;
+            currentItemBase = item.ItemBase;
 
             scrollbar.value = 1f;
             base.Show();
@@ -276,6 +300,9 @@ namespace Nekoyume.UI
                 // it isn't implemented to get equipment.exp in the MarketService.
                 // so, it doesn't show the expText in the shop buy UI.
                 false);
+
+            SetItemOwner(item.Product.SellerAvatarAddress);
+            currentItemBase = item.ItemBase;
             _onClose = onClose;
 
             scrollbar.value = 1f;
@@ -307,6 +334,7 @@ namespace Nekoyume.UI
             _onSubmit = onSubmit;
             _onClose = onClose;
             _onBlocked = onBlocked;
+            currentItemBase = item.ItemBase;
 
             scrollbar.value = 1f;
             base.Show();
@@ -374,6 +402,12 @@ namespace Nekoyume.UI
 
                 yield return null;
             }
+        }
+
+        public async void SetItemOwner(Address sellerAvatarAddress)
+        {
+            detail.OwnerName.text = await Premium.SHOP_GetItemOwnerName(sellerAvatarAddress);
+            detail.OwnerName.gameObject.SetActive(!string.IsNullOrEmpty(detail.OwnerName.text));
         }
 
         public void OnEnterButtonArea(bool value)

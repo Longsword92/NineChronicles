@@ -331,6 +331,18 @@ namespace Nekoyume.PandoraBox
                 States.Instance.GameConfigState.ShatterStrikeMaxDamage
             );
         }
+
+        public static async Task<string> SHOP_GetItemOwnerName(Address sellerAvatarAddress)
+        {
+            var avatarStates = await Nekoyume.Game.Game.instance.Agent.GetAvatarStatesAsync(
+                new[] { sellerAvatarAddress });
+            if (!avatarStates.TryGetValue(sellerAvatarAddress, out var avatarState))
+            {
+                return "NOT EXIST!";
+            }
+
+            return $"<size=120%>{avatarState.NameWithHash}</size>";
+        }
     }
     
 }

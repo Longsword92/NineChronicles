@@ -157,7 +157,7 @@ namespace Nekoyume.UI
         private int _eventDungeonId;
         private int _eventDungeonStageId;
 
-        private const int UsableApStoneCountWithRepeat = 5;
+        private const int UsableApStoneCountWithRepeat = 10;
 
         private int MaxApStoneCount =>
             _useSweep

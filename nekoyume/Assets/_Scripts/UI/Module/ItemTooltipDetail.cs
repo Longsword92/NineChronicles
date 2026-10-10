@@ -88,6 +88,9 @@ namespace Nekoyume.UI.Module
         [SerializeField]
         private SkillPositionTooltip skillTooltip;
 
+        [SerializeField] 
+        public TextMeshProUGUI OwnerName;
+
         public void Set(ItemBase itemBase, int itemCount, bool levelLimit, bool displayExp = true)
         {
             UpdateViewIconArea(itemBase, itemCount, levelLimit);
