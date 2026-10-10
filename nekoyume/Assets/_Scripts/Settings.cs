@@ -45,7 +45,7 @@ namespace Nekoyume
         public bool isPatrolRewardPushEnabled = true;
         public bool isAdventureBossPushEnabled = true;
 
-        public float MasterVolume => isVolumeMasterMuted ? 0 : volumeMaster;
+        public float MasterVolume => 0;
 
         public class Resolution
         {

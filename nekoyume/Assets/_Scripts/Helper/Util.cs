@@ -125,10 +125,23 @@ namespace Nekoyume.Helper
             }
 
             var agentAddress = Game.Game.instance.Agent.Address;
-            var key = $"{StoredSlotIndex}{agentAddress}";
-            var hasKey = PlayerPrefs.HasKey(key);
-            slotIndex = hasKey ? PlayerPrefs.GetInt(key) : 0;
-            return hasKey;
+            var key = GetStoredAvatarSlotIndexKey(agentAddress);
+            if (PlayerPrefs.HasKey(key))
+            {
+                slotIndex = PlayerPrefs.GetInt(key);
+                return true;
+            }
+
+            var legacyKey = GetStoredAvatarSlotIndexLegacyKey(agentAddress);
+            if (PlayerPrefs.HasKey(legacyKey))
+            {
+                slotIndex = PlayerPrefs.GetInt(legacyKey);
+                PlayerPrefs.SetInt(key, slotIndex);
+                return true;
+            }
+
+            slotIndex = 0;
+            return false;
         }
 
         public static void SaveAvatarSlotIndex(int slotIndex)
@@ -140,8 +153,19 @@ namespace Nekoyume.Helper
             }
 
             var agentAddress = Game.Game.instance.Agent.Address;
-            var key = $"{StoredSlotIndex}{agentAddress}";
+            var key = GetStoredAvatarSlotIndexKey(agentAddress);
             PlayerPrefs.SetInt(key, slotIndex);
+        }
+
+        private static string GetStoredAvatarSlotIndexKey(Libplanet.Crypto.Address agentAddress)
+        {
+            var planetId = Game.Game.instance.CurrentPlanetId?.ToString() ?? "UnknownPlanet";
+            return $"{StoredSlotIndex}{planetId}_{agentAddress}";
+        }
+
+        private static string GetStoredAvatarSlotIndexLegacyKey(Libplanet.Crypto.Address agentAddress)
+        {
+            return $"{StoredSlotIndex}{agentAddress}";
         }
 
         public static bool IsUsableItem(ItemBase itemBase)
