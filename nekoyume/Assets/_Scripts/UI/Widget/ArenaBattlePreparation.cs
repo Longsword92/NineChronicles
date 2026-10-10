@@ -14,12 +14,16 @@ using UnityEngine.UI;
 using Nekoyume.Helper;
 using Nekoyume.L10n;
 using Nekoyume.Model.EnumType;
+using Nekoyume.Model.Mail;
 using Nekoyume.State.Subjects;
 using Nekoyume.UI.Model;
+using Nekoyume.UI.Scroller;
 using TMPro;
 
 namespace Nekoyume.UI
 {
+    using Nekoyume.PandoraBox;
+    using System.Threading;
     using System.Threading.Tasks;
     using GeneratedApiNamespace.ArenaServiceClient;
     using Libplanet.Types.Assets;
@@ -39,6 +43,12 @@ namespace Nekoyume.UI
 
         [SerializeField]
         private Button closeButton;
+
+        [SerializeField]
+        private Button multipleButton;
+
+        [SerializeField]
+        private TextMeshProUGUI s1Text;
 
         [SerializeField]
         private Transform actionPointIconPos;
@@ -73,6 +83,8 @@ namespace Nekoyume.UI
         private readonly List<IDisposable> _disposables = new();
 
         private long? _chooseAvatarCp;
+        private bool _isSimulating;
+        private CancellationTokenSource _simulateCts;
 
         public override bool CanHandleInputEvent =>
             base.CanHandleInputEvent &&
@@ -98,8 +110,80 @@ namespace Nekoyume.UI
                 Find<ArenaBoard>().Show();
             });
 
+            multipleButton.onClick.AddListener(() =>
+            {
+                MultipleSimulate();
+            });
+
             CloseWidget = () => Close(true);
             base.Awake();
+        }
+
+        async void MultipleSimulate()
+        {
+            if (_isSimulating)
+            {
+                return;
+            }
+
+            _isSimulating = true;
+            _simulateCts?.Cancel();
+            _simulateCts?.Dispose();
+            _simulateCts = new CancellationTokenSource();
+            var cancellationToken = _simulateCts.Token;
+            multipleButton.interactable = false;
+            multipleButton.GetComponentInChildren<TextMeshProUGUI>().text = "Simulating...";
+            s1Text.text = "..."; //prevent old value
+
+            try
+            {
+                if (_info is null)
+                {
+                    NotificationSystem.Push(
+                        MailType.System,
+                        "Cannot find opponent info.",
+                        NotificationCell.NotificationType.Alert);
+                    return;
+                }
+
+                var enemyAddress = new Libplanet.Crypto.Address(_info.AvatarAddress);
+                var avatarStates = await Game.Game.instance.Agent.GetAvatarStatesAsync(
+                    Game.Game.instance.Agent.BlockTipStateRootHash,
+                    new[] { enemyAddress });
+
+                if (!avatarStates.TryGetValue(enemyAddress, out var enemyAvatarState))
+                {
+                    NotificationSystem.Push(
+                        MailType.System,
+                        "Cannot load opponent avatar state.",
+                        NotificationCell.NotificationType.Alert);
+                    return;
+                }
+
+                s1Text.text = await Premium.PVP_WinRate(
+                    States.Instance.CurrentAvatarState,
+                    enemyAvatarState,
+                    1000,
+                    cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                s1Text.text = "<color=#59514B>0.0</color>%";
+            }
+            catch (Exception e)
+            {
+                NcDebug.LogException(e);
+                NotificationSystem.Push(
+                    MailType.System,
+                    "Failed to simulate arena battle.",
+                    NotificationCell.NotificationType.Alert);
+            }
+            finally
+            {
+                _isSimulating = false;
+                multipleButton.interactable = true;
+                multipleButton.GetComponentInChildren<TextMeshProUGUI>().text = "999 X Simulate";
+            }
         }
 
         public override void Initialize()
@@ -131,6 +215,7 @@ namespace Nekoyume.UI
 
             _chooseAvatarCp = info.Cp;
             enemyCp.text = TextHelper.FormatNumber(_chooseAvatarCp.Value);
+            s1Text.text = "<color=#59514B>0.0</color>%";
             UpdateStartButton();
             information.UpdateInventory(BattleType.Arena, _chooseAvatarCp);
             coverToBlockClick.SetActive(false);
@@ -145,6 +230,10 @@ namespace Nekoyume.UI
         public override void Close(bool ignoreCloseAnimation = false)
         {
             _chooseAvatarCp = null;
+            _simulateCts?.Cancel();
+            _simulateCts?.Dispose();
+            _simulateCts = null;
+            _isSimulating = false;
             _disposables.DisposeAllAndClear();
             base.Close(ignoreCloseAnimation);
         }

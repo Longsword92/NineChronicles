@@ -11,6 +11,8 @@ using UnityEngine.UI;
 
 namespace Nekoyume.UI
 {
+
+    using Nekoyume.PandoraBox;
     using mixpanel;
     using Blockchain;
     using System.Linq;
@@ -18,6 +20,14 @@ namespace Nekoyume.UI
 
     public class BuffBonusPopup : PopupWidget
     {
+
+        //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+        [Header("PANDORA CUSTOM FIELDS")] [SerializeField]
+        private Button resetBuffButton = null;
+
+        [Space(50)]
+        //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
+
         [SerializeField]
         private ConditionalCostButton normalButton = null;
 
@@ -62,7 +72,23 @@ namespace Nekoyume.UI
                 .AddTo(gameObject);
 
             buffListButton.onClick.AddListener(OnClickBuffListButton);
+
+            //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+            resetBuffButton.OnClickAsObservable().Subscribe(_ => ResetSimulationBuff()).AddTo(gameObject);
+            //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
+
         }
+
+        //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+        void ResetSimulationBuff()
+        {
+            PandoraUtil.ShowSystemNotification("Custom Crystal Buff <color=red>removed</color>!",
+                NotificationCell.NotificationType.Information);
+            PlayerPrefs.DeleteKey("_PandoraBox_PVE_SelectedCrystalBuff");
+            PlayerPrefs.DeleteKey("_PandoraBox_PVE_SelectedCrystalBuffSkillId");
+            Widget.Find<BattlePreparation>().UpdateSimulateBuff();
+        }
+        //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
 
         public override void Initialize()
         {
@@ -146,7 +172,7 @@ namespace Nekoyume.UI
             Close();
         }
 
-        private void OnClickBuffListButton()
+        public void OnClickBuffListButton()
         {
             var pos = cellContainer.anchoredPosition;
             pos.y = 0;

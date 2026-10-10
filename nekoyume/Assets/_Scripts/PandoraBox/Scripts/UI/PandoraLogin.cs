@@ -44,6 +44,21 @@ namespace Nekoyume
             pandoraSignupButton.onClick.AddListener(PandoraSignupClick);
             pandoraLoginButton.onClick.AddListener(PandoraLoginClick);
             pandoraSignupShowToggle.onValueChanged.AddListener(_ => ShowPassword());
+            pandoraLoginRememberToggle.onValueChanged.AddListener(value =>
+            {
+                var slot = PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings;
+                slot.IsRemember = value;
+                if (!value)
+                {
+                    slot.Password = string.Empty;
+                }
+                else if (!string.IsNullOrEmpty(pandoraLoginPasswordField.text))
+                {
+                    slot.Password = pandoraLoginPasswordField.text;
+                }
+
+                PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SaveData();
+            });
         }
 
         public void Initilize(string path)
@@ -56,8 +71,9 @@ namespace Nekoyume
             KeyStore = path is null ? Web3KeyStore.DefaultKeyStore : new Web3KeyStore(path);
 
             // Load the index of the last logged-in Pandora account from PlayerPrefs, default to 0 if not set
-            PandoraMaster.SelectedLoginAccountIndex =
-                Mathf.Clamp(PlayerPrefs.GetInt("_PandoraBox_Account_lastLoginIndex", 0), 0, PandoraAccounts.Count);
+            PandoraMaster.SelectedLoginAccountIndex = PandoraAccounts.Count > 0
+                ? Mathf.Clamp(PlayerPrefs.GetInt("_PandoraBox_Account_lastLoginIndex", 0), 0, PandoraAccounts.Count - 1)
+                : 0;
 
 
             // Select the appropriate account slot and load its data
@@ -71,8 +87,9 @@ namespace Nekoyume
                 PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.IsRemember;
 
             // Set the password field to the saved password if the remember toggle is on, or an empty string otherwise
-            pandoraLoginPasswordField.text =
-                PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.Password;
+            pandoraLoginPasswordField.text = PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.IsRemember
+                ? PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings.Password
+                : string.Empty;
 
             // Show the login group and hide the sign-up group
             pandoraSignupGroup.SetActive(false);
@@ -90,9 +107,6 @@ namespace Nekoyume
         {
             // hide the login group
             pandoraLoginGroup.SetActive(false);
-
-            PandoraUtil.ShowSystemNotification("This Slot for only Premium Accounts!",
-                                        NotificationCell.NotificationType.Information);
             pandoraLoginGroup.SetActive(true);
             nineLoginGroup.SetActive(false);
 
@@ -105,8 +119,8 @@ namespace Nekoyume
             var slot = PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings;
             slot.Username = username;
             slot.Email = email;
-            slot.Password = password;
-            slot.IsRemember = true;
+            slot.IsRemember = pandoraLoginRememberToggle.isOn;
+            slot.Password = slot.IsRemember ? password : string.Empty;
             PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SaveData();
             isAuth = true;
 
@@ -172,7 +186,7 @@ namespace Nekoyume
             pandoraLoginRememberToggle.isOn = PandoraAccounts[value].SlotSettings.IsRemember;
             pandoraLoginPasswordField.text = PandoraAccounts[value].SlotSettings.IsRemember
                 ? PandoraAccounts[value].SlotSettings.Password
-                : "";
+                : string.Empty;
         }
 
         void ShowPassword()

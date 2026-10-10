@@ -26,6 +26,7 @@ using Toggle = Nekoyume.UI.Module.Toggle;
 
 namespace Nekoyume.UI
 {
+    using Nekoyume.PandoraBox;
     using Scroller;
     using UniRx;
 
@@ -55,6 +56,19 @@ namespace Nekoyume.UI
 
         [SerializeField]
         private Button closeButton;
+
+         //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+        [Header("PANDORA CUSTOM FIELDS")]
+        public TextMeshProUGUI[] winStarTexts = null;
+        public Button MultipleSimulateButton = null;
+        [SerializeField] private GameObject stageWinRate;
+
+        [SerializeField] private BonusBuffViewDataScriptableObject bonusBuffViewData;
+        [SerializeField] private Image simulatorGradeIconImage; //SS, S , A , ...
+        [SerializeField] private Image simulatorGradeBgImage;
+        [SerializeField] private Image simulatorBuffIconImage;
+        [SerializeField] private Button showSimulatorBuffBtn;
+        //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
 
         [SerializeField]
         private Transform buttonStarImageTransform;
@@ -203,6 +217,13 @@ namespace Nekoyume.UI
                         L10nManager.Localize("ERROR_ACTION_POINT"),
                         NotificationCell.NotificationType.Alert))
                 .AddTo(gameObject);
+
+
+            //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+            showSimulatorBuffBtn.OnClickAsObservable().Subscribe(_ => OpenSimulatorBuff()).AddTo(gameObject);
+            MultipleSimulateButton.OnClickAsObservable().Subscribe(_ => MultipleSimulate()).AddTo(gameObject);
+            //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
+
         }
 
         public void Show(
@@ -834,6 +855,51 @@ namespace Nekoyume.UI
                 NcDebug.LogError($"TryGetFirstCell throw error.");
             }
         }
+
+        //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+        public async void MultipleSimulate()
+        {
+            var consumables = information.GetEquippedConsumables().Select(x => x.ItemId).ToList();
+            var skillId = PlayerPrefs.GetInt("_PandoraBox_PVE_SelectedCrystalBuff", -1);
+
+            await Premium.PVE_MultiSimulate(_worldId, _stageId, consumables, skillId);
+
+        }
+        //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
+
+        //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+
+        public void OpenSimulatorBuff()
+        {
+            Widget.Find<BuffBonusPopup>().Show();
+            Widget.Find<BuffBonusPopup>().OnClickBuffListButton();
+        }
+
+        public void UpdateSimulateBuff()
+        {
+            var skillId = PlayerPrefs.GetInt("_PandoraBox_PVE_SelectedCrystalBuffSkillId", -1);
+            simulatorBuffIconImage.transform.parent.gameObject.SetActive(skillId != -1);
+            if (skillId == -1)
+            {
+                simulatorGradeBgImage.sprite = bonusBuffViewData.GetBonusBuffGradeData(TableData.Crystal.CrystalRandomBuffSheet.Row.BuffRank.B).BgSprite;
+            }
+            else
+            {
+                var skillSheet = Game.Game.instance.TableSheets.SkillSheet;
+                if (skillSheet.TryGetValue(skillId, out var skillRow))
+                {
+                    
+                    var skillRank = (TableData.Crystal.CrystalRandomBuffSheet.Row.BuffRank)(PlayerPrefs.GetInt("_PandoraBox_PVE_SelectedCrystalBuffRank", 1));
+
+                    simulatorBuffIconImage.sprite = bonusBuffViewData.GetBonusBuffIcon(skillRow.SkillCategory);
+                    var gradeData = bonusBuffViewData.GetBonusBuffGradeData(skillRank);
+                    simulatorGradeBgImage.sprite = gradeData.BgSprite;
+                    simulatorGradeIconImage.sprite = gradeData.IconSprite;
+                }
+            }
+
+        }
+        //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
 
         public void TutorialActionClickBattlePreparationSecondInventoryCellView()
         {

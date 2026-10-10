@@ -304,17 +304,17 @@ namespace Nekoyume.Game.LiveAsset
                 return;
             }
 
-            var isMainNet = Multiplanetary.PlanetId.IsMainNet(planetId.Value);
-            var previousThorSchedule = ThorSchedule;
-            ThorSchedule = isMainNet ?
-                _cachedThorSchedules.MainNet :
-                _cachedThorSchedules.Others;
-            if (previousThorSchedule != ThorSchedule)
-            {
-                NcDebug.Log($"[{nameof(LiveAssetManager)}] SetThorSchedule: {planetId}, isMainNet: {isMainNet}");
-            }
+            // var isMainNet = Multiplanetary.PlanetId.IsMainNet(planetId.Value);
+            // var previousThorSchedule = ThorSchedule;
+            // ThorSchedule = isMainNet ?
+            //     _cachedThorSchedules.MainNet :
+            //     _cachedThorSchedules.Others;
+            // if (previousThorSchedule != ThorSchedule)
+            // {
+            //     NcDebug.Log($"[{nameof(LiveAssetManager)}] SetThorSchedule: {planetId}, isMainNet: {isMainNet}");
+            // }
 
-            OnChangedThorSchedule?.Invoke(ThorSchedule);
+            // OnChangedThorSchedule?.Invoke(ThorSchedule);
         }
 #endregion ThorSchedule
 

@@ -117,6 +117,8 @@ namespace Nekoyume.UI
 
         [SerializeField] private Button thorSeasonButton;
 
+        [SerializeField] private Button selectCharacterButton;
+
         [SerializeField] private TMP_Text thorScheduleText;
 
         private Coroutine _coLazyClose;
@@ -174,6 +176,7 @@ namespace Nekoyume.UI
                 .Subscribe(level =>
                     stakingLevelIcon.sprite = stakeIconData.GetIcon(level, IconType.Bubble))
                 .AddTo(gameObject);
+
             BattleRenderer.Instance.OnPrepareStage += GoToPrepareStage;
 
             Game.Game.instance.AdventureBossData.SeasonInfo
@@ -196,6 +199,11 @@ namespace Nekoyume.UI
                     adventureBossUnMark.SetActive(!activeMark);
                 })
                 .AddTo(gameObject);
+
+            selectCharacterButton.onClick.AddListener((() =>
+            {
+                Game.Game.instance.BackToNest();
+            }));
 
             thorSeasonButton.onClick.AddListener((() =>
             {

@@ -25,6 +25,7 @@ namespace Nekoyume.UI
 {
     using Blockchain;
     using UniRx;
+    using Nekoyume.PandoraBox;
 
     public class LoginSystem : SystemWidget
     {
@@ -67,15 +68,22 @@ namespace Nekoyume.UI
         public TextMeshProUGUI accountAddressHolder;
         public TextMeshProUGUI accountWarningText;
 
+        //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+        [Header("PANDORA CUSTOM FIELDS")] public PandoraLogin pandoraLogin;
+        [SerializeField] private UnityEngine.UI.Toggle nineLoginRememberToggle;
+        [SerializeField] private UnityEngine.UI.Toggle show9cPasswordToggle;
+
+        //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
+
         [Space]
         public GameObject passPhraseGroup;
 
-        public TMP_InputField passPhraseField;
+        public InputField passPhraseField;
 
         [Space]
         public GameObject retypeGroup;
 
-        public TMP_InputField retypeField;
+        public InputField retypeField;
         public TextMeshProUGUI retypeText;
         public TextMeshProUGUI correctText;
         public TextMeshProUGUI incorrectText;
@@ -83,14 +91,14 @@ namespace Nekoyume.UI
         [Space]
         public GameObject loginGroup;
 
-        public TMP_InputField loginField;
+        public InputField loginField;
         public GameObject loginWarning;
 
         [Space]
         public TextMeshProUGUI findPassphraseTitle;
 
         public GameObject findPassphraseGroup;
-        public TMP_InputField findPassphraseField;
+        public InputField findPassphraseField;
         public GameObject findPrivateKeyWarning;
 
         [Space]
@@ -115,11 +123,14 @@ namespace Nekoyume.UI
             incorrectText.gameObject.SetActive(false);
             submitButton.Text = L10nManager.Localize("UI_GAME_START");
             submitButton.OnSubmitSubject.Subscribe(_ => Submit()).AddTo(gameObject);
-            setPasswordLaterButton.onClick.AddListener(() =>
+            if (setPasswordLaterButton != null)
             {
-                Analyzer.Instance.Track("Unity/SetPassword/Cancel");
-                Close(true);
-            });
+                setPasswordLaterButton.onClick.AddListener(() =>
+                {
+                    Analyzer.Instance.Track("Unity/SetPassword/Cancel");
+                    Close(true);
+                });
+            }
 
             passPhraseField.onEndEdit.AddListener(CheckPassphrase);
             retypeField.onEndEdit.AddListener(CheckRetypePassphrase);
@@ -144,7 +155,10 @@ namespace Nekoyume.UI
             submitButton.Interactable = false;
             findPassphraseButton.gameObject.SetActive(false);
             backToLoginButton.gameObject.SetActive(false);
-            setPasswordLaterButton.gameObject.SetActive(false);
+            if (setPasswordLaterButton != null)
+            {
+                setPasswordLaterButton.gameObject.SetActive(false);
+            }
 
             accountAddressText.gameObject.SetActive(false);
             accountAddressHolder.gameObject.SetActive(false);
@@ -169,7 +183,10 @@ namespace Nekoyume.UI
                     submitButton.Text = L10nManager.Localize("UI_CONFIRM");
                     passPhraseGroup.SetActive(true);
                     retypeGroup.SetActive(true);
-                    setPasswordLaterButton.gameObject.SetActive(true);
+                    if (setPasswordLaterButton != null)
+                    {
+                        setPasswordLaterButton.gameObject.SetActive(true);
+                    }
                     break;
                 case States.CreateAccount:
                     titleText.gameObject.SetActive(false);
@@ -274,7 +291,7 @@ namespace Nekoyume.UI
         private void CheckLogin(System.Action success)
         {
             NcDebug.Log($"[LoginSystem] CheckLogin invoked");
-            if (!KeyManager.Instance.TrySigninWithTheFirstRegisteredKey(loginField.text))
+            if (!KeyManager.Instance.TrySigninWithTheFirstRegisteredKey(loginField.text, PandoraMaster.SelectedLoginAccountIndex))
             {
                 loginWarning.SetActive(true);
                 return;
@@ -290,6 +307,8 @@ namespace Nekoyume.UI
                         KeyManager.Instance.SignedInAddress,
                         loginField.text);
                 }
+
+                Login9cAccount();
 
                 success?.Invoke();
             }
@@ -453,6 +472,10 @@ namespace Nekoyume.UI
             }
 #endif
             base.Show();
+
+            //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+            pandoraLogin.Initilize(null);
+            //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
         }
 
         // Keystore 가 없을 때에만 가능해야 함
@@ -593,5 +616,50 @@ namespace Nekoyume.UI
                 accountAddressText.gameObject.SetActive(true);
             }
         }
+
+        //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+
+        void Show9cPass()
+        {
+            // if (show9cPasswordToggle.isOn)
+            //     loginField.contentType = InputField.ContentType.Standard;
+            // else
+            //     loginField.contentType = InputField.ContentType.Password;
+            // loginField.ForceLabelUpdate();
+        }
+
+        public void Update9cLoginInfo(string address)
+        {
+            var slot = pandoraLogin.PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings;
+
+            accountAddressText.text = address;
+            nineLoginRememberToggle.isOn = true;
+            loginField.text = slot.AddressPassword;
+            PandoraUtil.ShowSystemNotification(slot.AddressPassword != "" ? "9c Account Password is set." : "9c Account Password is not set.",
+                    NotificationCell.NotificationType.Information);
+            Login9cAccount();
+        }
+
+        void Login9cAccount()
+        {
+            PrivateKey privateKey = pandoraLogin.GetKey(loginField.text);
+            if (!(privateKey is null))
+            {
+                //save address password
+                var slot = pandoraLogin.PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings;
+                slot.IsAutoLogin = true;
+                
+                slot.AddressPassword = loginField.text;
+                pandoraLogin.PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SaveData();
+
+                Close();
+            }
+            else
+            {
+                PandoraUtil.ShowSystemNotification("9c Account Password is not Correct!",
+                    NotificationCell.NotificationType.Information);
+            }
+        }
+        //|||||||||||||| PANDORA  END  CODE |||||||||||||||||||
     }
 }

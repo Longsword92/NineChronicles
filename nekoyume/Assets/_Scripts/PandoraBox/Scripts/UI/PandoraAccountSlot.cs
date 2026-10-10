@@ -41,7 +41,7 @@ namespace Nekoyume.PandoraBox
             SlotSettings.Password = !string.IsNullOrEmpty(SlotSettings.Password)
                 ? PandoraUtil.SimpleDecrypt(SlotSettings.Password)
                 : "";
-            SlotSettings.AddressPassword = !string.IsNullOrEmpty(SlotSettings.Password)
+            SlotSettings.AddressPassword = !string.IsNullOrEmpty(SlotSettings.AddressPassword)
                 ? PandoraUtil.SimpleDecrypt(SlotSettings.AddressPassword)
                 : "";
 

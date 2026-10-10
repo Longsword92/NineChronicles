@@ -209,6 +209,34 @@ namespace Nekoyume.Blockchain
         }
 
         /// <summary>
+        /// Try sign in with the first registered key in the key store with the given passphrase.
+        /// </summary>
+        public bool TrySigninWithTheFirstRegisteredKey(string passphrase, int index)
+        {
+            NcDebug.Log($"[KeyManager] TrySigninWithTheFirstKey(string, int) invoked with passphrase and index({index}).");
+            if (_keyStore is null)
+            {
+                NcDebug.LogWarning("[KeyManager] KeyStore is not initialized.");
+                return false;
+            }
+
+            var firstKey = _keyStore.List().ElementAtOrDefault(index);
+            if (firstKey is null)
+            {
+                NcDebug.LogWarning("[KeyManager] KeyStore does not have any key at the specified index.");
+                return false;
+            }
+
+            if (!TryUnprotect(firstKey.Item2, passphrase, out var privateKey))
+            {
+                return false;
+            }
+
+            _signedInPrivateKey = privateKey;
+            return true;
+        }
+
+        /// <summary>
         /// Try sign in with the first registered key in the key store.
         /// </summary>
         public bool TrySigninWithTheFirstRegisteredKey()
@@ -235,6 +263,40 @@ namespace Nekoyume.Blockchain
             {
                 NcDebug.Log("[KeyManager] TrySigninWithTheFirstRegisteredKey(Func<string, string>) failed." +
                     "KeyStore does not have any key.");
+                return false;
+            }
+
+            var passphrase = GetCachedPassphrase(firstKey.Item2.Address);
+            return TrySigninWithTheFirstRegisteredKey(passphrase);
+        }
+
+        /// <summary>
+        /// Try sign in with the first registered key in the key store.
+        /// </summary>
+        public bool TrySigninWithTheFirstRegisteredKey(int index)
+        {
+            NcDebug.Log("[KeyManager] TrySigninWithTheFirstRegisteredKey(Func<string, string>) invoked " +
+                "with decryptFunc.");
+            // FIXME: Can we remove this check? `if (!Platform.IsMobilePlatform())`
+            if (!Platform.IsMobilePlatform())
+            {
+                NcDebug.Log("[KeyManager] TrySignInWithLocalPpk(Func<string, string>) failed." +
+                    "platform is not mobile");
+                return false;
+            }
+
+            if (_keyStore is null)
+            {
+                NcDebug.Log("[KeyManager] TrySigninWithTheFirstRegisteredKey(Func<string, string>) failed." +
+                    "KeyStore is not initialized.");
+                return false;
+            }
+
+            var firstKey = _keyStore.List().ElementAtOrDefault(index);
+            if (firstKey is null)
+            {
+                NcDebug.Log("[KeyManager] TrySigninWithTheFirstRegisteredKey(Func<string, string>) failed." +
+                    "KeyStore does not have any key at the specified index.");
                 return false;
             }
 
