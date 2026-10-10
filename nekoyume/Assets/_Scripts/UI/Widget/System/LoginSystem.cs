@@ -308,9 +308,9 @@ namespace Nekoyume.UI
                         loginField.text);
                 }
 
-                Login9cAccount();
+                Login9cAccount(success);
 
-                success?.Invoke();
+                // success?.Invoke();
             }
             else
             {
@@ -635,15 +635,14 @@ namespace Nekoyume.UI
             accountAddressText.text = address;
             nineLoginRememberToggle.isOn = true;
             loginField.text = slot.AddressPassword;
-            PandoraUtil.ShowSystemNotification(slot.AddressPassword != "" ? "9c Account Password is set." : "9c Account Password is not set.",
-                    NotificationCell.NotificationType.Information);
             Login9cAccount();
         }
 
-        void Login9cAccount()
+        void Login9cAccount(System.Action success = null)
         {
-            PrivateKey privateKey = pandoraLogin.GetKey(loginField.text);
-            if (!(privateKey is null))
+            // PrivateKey privateKey = pandoraLogin.GetKey(loginField.text);
+            bool successSignin = KeyManager.Instance.TrySigninWithTheFirstRegisteredKey(loginField.text, PandoraMaster.SelectedLoginAccountIndex);
+            if (successSignin)
             {
                 //save address password
                 var slot = pandoraLogin.PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SlotSettings;
@@ -652,7 +651,16 @@ namespace Nekoyume.UI
                 slot.AddressPassword = loginField.text;
                 pandoraLogin.PandoraAccounts[PandoraMaster.SelectedLoginAccountIndex].SaveData();
 
-                Close();
+                
+                if (success != null)
+                {
+                    success?.Invoke();
+                } else
+                {
+                    PandoraUtil.ShowSystemNotification("9c Account Password is set.",
+                    NotificationCell.NotificationType.Information);
+                    Close();
+                }
             }
             else
             {
