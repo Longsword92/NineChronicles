@@ -193,10 +193,24 @@ namespace Nekoyume.PandoraBox
                 return;
             }
 
+            if (preparePVE.winStarTexts is null || preparePVE.winStarTexts.Length == 0)
+            {
+                NotificationSystem.Push(
+                    MailType.System,
+                    "Win rate text UI is not configured.",
+                    NotificationCell.NotificationType.Alert);
+                return;
+            }
+
             preparePVE.MultipleSimulateButton.interactable = false;
             preparePVE.MultipleSimulateButton.GetComponentInChildren<TextMeshProUGUI>().text = "Simulating...";
             foreach (var item in preparePVE.winStarTexts)
-                item.text = "?";
+            {
+                if (item != null)
+                {
+                    item.text = "?";
+                }
+            }
 
             try
             {
@@ -228,8 +242,14 @@ namespace Nekoyume.PandoraBox
                     }
                 }
 
-                for (int i = 0; i < 3; i++)
+                var uiCount = Math.Min(3, preparePVE.winStarTexts.Length);
+                for (int i = 0; i < uiCount; i++)
                 {
+                    if (preparePVE.winStarTexts[i] == null)
+                    {
+                        continue;
+                    }
+
                     float finalRatio = (float)winStars[i] / (float)totalSimulations;
                     float FinalValue = (int)(finalRatio * 100f);
 
