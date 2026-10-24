@@ -1,6 +1,13 @@
 @echo off
 setlocal
 
+rem The player must be built with Player Settings > Force Single Instance OFF
+rem (ProjectSettings.asset: forceSingleInstance: 0). Otherwise only one copy can
+rem run at a time and the others fail with a "Fatal error" dialog.
+rem Because the 4 copies share PlayerPrefs (%USERPROFILE%\AppData\LocalLow\...)
+rem and the keystore (%APPDATA%\planetarium\keystore), pass --keystore-path if
+rem each window must sign in with a different account.
+
 set "SRC_ROOT=D:\Game\9c"
 set "SRC_GAME=%SRC_ROOT%\NineChronicles"
 set "SRC_HEIMDALL_CLO=%SRC_ROOT%\clo_heimdall.json"
