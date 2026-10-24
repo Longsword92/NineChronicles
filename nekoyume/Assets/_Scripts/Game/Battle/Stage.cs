@@ -92,6 +92,7 @@ namespace Nekoyume.Game.Battle
         private BattleResultPopup.Model _battleResultModel;
         private InfiniteTowerResultPopup.Model _infiniteTowerResultModel;
         private Coroutine _battleCoroutine;
+        private bool _skipBattleRequested;
         private Player _stageRunningPlayer;
         private Vector3 _playerPosition;
         private Coroutine _positionCheckCoroutine;
@@ -389,7 +390,13 @@ namespace Nekoyume.Game.Battle
                 return;
             }
 
+            _skipBattleRequested = false;
             _battleCoroutine = StartCoroutine(CoPlayStage(log));
+        }
+
+        public void RequestSkipBattle()
+        {
+            _skipBattleRequested = true;
         }
 
         private void SetSpeed(float speed)
@@ -422,6 +429,11 @@ namespace Nekoyume.Game.Battle
                 var isBreakThroughStarted = false;
                 for (var i = 0; i < eventCount; i++)
                 {
+                    if (_skipBattleRequested)
+                    {
+                        break;
+                    }
+
                     var e = log.events[i];
                     if (!isBreakThroughStarted && e is Breakthrough)
                     {
@@ -444,6 +456,11 @@ namespace Nekoyume.Game.Battle
                 // 무한의탑은 일반 전투와 동일하게 처리
                 for (var i = 0; i < eventCount; i++)
                 {
+                    if (_skipBattleRequested)
+                    {
+                        break;
+                    }
+
                     var e = log.events[i];
                     e.LogEvent(i + 1, eventCount);
                     yield return StartCoroutine(e.CoExecute(this));
@@ -453,6 +470,11 @@ namespace Nekoyume.Game.Battle
             {
                 for (var i = 0; i < eventCount; i++)
                 {
+                    if (_skipBattleRequested)
+                    {
+                        break;
+                    }
+
                     var e = log.events[i];
                     e.LogEvent(i + 1, eventCount);
                     yield return StartCoroutine(e.CoExecute(this));
@@ -501,6 +523,7 @@ namespace Nekoyume.Game.Battle
         public void ClearBattle()
         {
             _battleLog = null;
+            _skipBattleRequested = false;
             if (_battleCoroutine is null)
             {
                 return;

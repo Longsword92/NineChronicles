@@ -79,6 +79,7 @@ namespace Nekoyume.UI
                 stage.IsExitReserved = value;
                 if (value)
                 {
+                    stage.RequestSkipBattle();
                     OneLineSystem.Push(
                         MailType.System,
                         L10nManager.Localize("UI_BATTLE_EXIT_RESERVATION_TITLE"),

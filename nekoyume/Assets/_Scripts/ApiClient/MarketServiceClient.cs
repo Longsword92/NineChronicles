@@ -60,11 +60,12 @@ namespace Nekoyume.ApiClient
                 return (new List<ItemProductResponseModel>(), 0);
             }
 
-            var options = new JsonSerializerOptions
+            var response = DeserializeProductResponse(json, url);
+            if (response?.ItemProducts is null)
             {
-                PropertyNameCaseInsensitive = true
-            };
-            var response = JsonSerializer.Deserialize<MarketProductResponse>(json, options);
+                return (new List<ItemProductResponseModel>(), 0);
+            }
+
             return (response.ItemProducts.ToList(), response.TotalCount);
         }
 
@@ -92,11 +93,12 @@ namespace Nekoyume.ApiClient
                 return (new List<FungibleAssetValueProductResponseModel>(), 0);
             }
 
-            var options = new JsonSerializerOptions
+            var response = DeserializeProductResponse(json, url);
+            if (response?.FungibleAssetValueProducts is null)
             {
-                PropertyNameCaseInsensitive = true
-            };
-            var response = JsonSerializer.Deserialize<MarketProductResponse>(json, options);
+                return (new List<FungibleAssetValueProductResponseModel>(), 0);
+            }
+
             return (response.FungibleAssetValueProducts.ToList(), response.TotalCount);
         }
 
@@ -117,11 +119,15 @@ namespace Nekoyume.ApiClient
                     new List<ItemProductResponseModel>());
             }
 
-            var options = new JsonSerializerOptions
+            var response = DeserializeProductResponse(json, url);
+            if (response?.FungibleAssetValueProducts is null ||
+                response.ItemProducts is null)
             {
-                PropertyNameCaseInsensitive = true
-            };
-            var response = JsonSerializer.Deserialize<MarketProductResponse>(json, options);
+                return (
+                    new List<FungibleAssetValueProductResponseModel>(),
+                    new List<ItemProductResponseModel>());
+            }
+
             var fungibleAssets = response.FungibleAssetValueProducts.ToList();
             var items = response.ItemProducts.ToList();
             return (fungibleAssets, items);
@@ -143,11 +149,15 @@ namespace Nekoyume.ApiClient
                     new List<ItemProductResponseModel>());
             }
 
-            var options = new JsonSerializerOptions
+            var response = DeserializeProductResponse(json, url);
+            if (response?.FungibleAssetValueProducts is null ||
+                response.ItemProducts is null)
             {
-                PropertyNameCaseInsensitive = true
-            };
-            var response = JsonSerializer.Deserialize<MarketProductResponse>(json, options);
+                return (
+                    new List<FungibleAssetValueProductResponseModel>(),
+                    new List<ItemProductResponseModel>());
+            }
+
             var fungibleAssets = response.FungibleAssetValueProducts.ToList();
             var items = response.ItemProducts.ToList();
             return (fungibleAssets, items);
@@ -173,11 +183,13 @@ namespace Nekoyume.ApiClient
                 return (string.Empty, null, null);
             }
 
-            var options = new JsonSerializerOptions
+            var response = DeserializeProductResponse(json, url);
+            if (response?.FungibleAssetValueProducts is null ||
+                response.ItemProducts is null)
             {
-                PropertyNameCaseInsensitive = true
-            };
-            var response = JsonSerializer.Deserialize<MarketProductResponse>(json, options);
+                return (string.Empty, null, null);
+            }
+
             var fungibleAssetProduct = response.FungibleAssetValueProducts.FirstOrDefault();
             if (fungibleAssetProduct != null)
             {
@@ -195,6 +207,32 @@ namespace Nekoyume.ApiClient
             }
 
             return (string.Empty, null, null);
+        }
+
+        /// <summary>
+        /// Guards against non-JSON payloads (HTML error pages, wrong host casing, 404/500 pages).
+        /// Deserializing those would throw JsonException instead of returning an empty result.
+        /// </summary>
+        private static MarketProductResponse DeserializeProductResponse(string json, string url)
+        {
+            var trimmed = json?.TrimStart();
+            if (string.IsNullOrEmpty(trimmed) ||
+                trimmed[0] != '{')
+            {
+                var preview = string.IsNullOrEmpty(json)
+                    ? string.Empty
+                    : json.Substring(0, Math.Min(200, json.Length));
+                NcDebug.LogError(
+                    $"[{nameof(MarketServiceClient)}] Non-JSON response from {url}. " +
+                    $"Check `MarketServiceHost`. Body: {preview}");
+                return null;
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            return JsonSerializer.Deserialize<MarketProductResponse>(json, options);
         }
     }
 }

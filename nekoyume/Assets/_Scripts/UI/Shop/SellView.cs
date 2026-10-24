@@ -31,6 +31,7 @@ namespace Nekoyume.UI.Module
 
         private readonly ReactiveProperty<ShopSortFilter> _selectedSortFilter =
             new(ShopSortFilter.CP);
+        private List<ShopSortFilter> _shopSortFilters;
 
         public void ClearSelectedItem()
         {
@@ -60,14 +61,15 @@ namespace Nekoyume.UI.Module
                 })
                 .Subscribe(filter => _selectedSubTypeFilter.Value = filter).AddTo(gameObject);
 
-            sortFilter.AddOptions(ShopSortFilterExtension.ShopSortFilters
+            _shopSortFilters = ShopSortFilterExtension.ShopSortFilters.ToList();
+            sortFilter.AddOptions(_shopSortFilters
                 .Select(type => L10nManager.Localize($"UI_{type.ToString().ToUpper()}")).ToList());
             sortFilter.onValueChanged.AsObservable()
                 .Select(index =>
                 {
                     try
                     {
-                        return (ShopSortFilter)index;
+                        return _shopSortFilters[index];
                     }
                     catch
                     {
@@ -190,6 +192,11 @@ namespace Nekoyume.UI.Module
                 case ShopSortFilter.UnitPrice:
                     result = itemProducts
                         .OrderByDescending(x => x.Product.Price / x.Product.Quantity).ToList();
+                    break;
+                case ShopSortFilter.Latest:
+                    result = itemProducts
+                        .OrderByDescending(x => x.Product.RegisteredBlockIndex)
+                        .ToList();
                     break;
             }
 

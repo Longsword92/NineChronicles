@@ -12,7 +12,8 @@ namespace Nekoyume.EnumType
         CrystalPerPrice = 4,
         EquipmentLevel = 5,
         OptionCount = 6,
-        UnitPrice = 7
+        UnitPrice = 7,
+        Latest = 8
     }
 
     public static class ShopSortFilterExtension
@@ -24,13 +25,14 @@ namespace Nekoyume.EnumType
                 return new[]
                 {
                     ShopSortFilter.CP,
+                    ShopSortFilter.Latest,
                     ShopSortFilter.Price,
                     ShopSortFilter.Class,
                     ShopSortFilter.Crystal,
                     ShopSortFilter.CrystalPerPrice,
                     ShopSortFilter.EquipmentLevel,
                     ShopSortFilter.OptionCount,
-                    ShopSortFilter.UnitPrice
+                    ShopSortFilter.UnitPrice,
                 };
             }
         }
@@ -47,6 +49,10 @@ namespace Nekoyume.EnumType
                 ShopSortFilter.EquipmentLevel => isAscending ? MarketOrderType.level : MarketOrderType.level_desc,
                 ShopSortFilter.OptionCount => isAscending ? MarketOrderType.opt_count : MarketOrderType.opt_count_desc,
                 ShopSortFilter.UnitPrice => isAscending ? MarketOrderType.unit_price : MarketOrderType.unit_price_desc,
+                // The market API has no working order-by-registration-time option, so 'Latest' fetches
+                // the same CP-ordered list as CP and is re-ordered on the client by RegisteredBlockIndex.
+                // Always request cp_desc so both directions share the exact CP list as their base data.
+                ShopSortFilter.Latest => MarketOrderType.cp_desc,
                 _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             };
         }

@@ -87,7 +87,8 @@ namespace Nekoyume.UI.Module
             { ShopSortFilter.CrystalPerPrice, false },
             { ShopSortFilter.EquipmentLevel, false },
             { ShopSortFilter.OptionCount, false },
-            { ShopSortFilter.UnitPrice, true }
+            { ShopSortFilter.UnitPrice, true },
+            { ShopSortFilter.Latest, false }
         };
 
         private readonly List<ShopItem> _selectedItems = new();
@@ -148,6 +149,21 @@ namespace Nekoyume.UI.Module
             _customIconIds.AddRange(tableSheets.CustomEquipmentCraftIconSheet.Values.Select(x => x.IconId));
             _runeIds.AddRange(tableSheets.RuneListSheet.Values.Select(x => x.Id));
             _petIds.AddRange(tableSheets.PetSheet.Values.Select(x => x.Id));
+            foreach (var filter in itemTypeFilters)
+            {
+                if (!filter.sortFilters.Contains(ShopSortFilter.Latest))
+                {
+                    var cpIndex = filter.sortFilters.IndexOf(ShopSortFilter.CP);
+                    if (cpIndex >= 0)
+                    {
+                        filter.sortFilters.Insert(cpIndex + 1, ShopSortFilter.Latest);
+                    }
+                    else
+                    {
+                        filter.sortFilters.Insert(0, ShopSortFilter.Latest);
+                    }
+                }
+            }
 
             historyButton.onClick.AddListener(() =>
             {
@@ -555,9 +571,19 @@ namespace Nekoyume.UI.Module
         protected override IEnumerable<ShopItem> GetSortedModels(List<ShopItem> items)
         {
             // to check mimir equipment level
-            return _levelLimit.Value
+            var models = _levelLimit.Value
                 ? items.Where(item => Util.IsUsableItem(item.ItemBase))
                 : items;
+
+            if (_selectedSortFilter.Value != ShopSortFilter.Latest)
+            {
+                return models;
+            }
+
+            // The market API cannot order by registration time, so order the loaded page locally.
+            return _isAscending.Value
+                ? models.OrderBy(item => item.Product?.RegisteredBlockIndex ?? 0)
+                : models.OrderByDescending(item => item.Product?.RegisteredBlockIndex ?? 0);
         }
 
         protected override void UpdateView()
