@@ -95,14 +95,14 @@ namespace Nekoyume.UI.Module
         {
             UpdateViewIconArea(itemBase, itemCount, levelLimit);
             UpdateDescriptionArea(itemBase);
-            UpdateOptionArea(itemBase, itemCount);
+            UpdateOptionArea(itemBase, itemCount, levelLimit);
             UpdateTradableText(itemBase);
             UpdateExpText(displayExp ? itemBase : null);
         }
 
-        private void UpdateOptionArea(ItemBase itemBase, int itemCount)
+        private void UpdateOptionArea(ItemBase itemBase, int itemCount, bool levelLimit)
         {
-            var statCount = UpdateStatsArea(itemBase, itemCount);
+            var statCount = UpdateStatsArea(itemBase, itemCount, levelLimit);
             var skillCount = UpdateSkillsArea(itemBase);
             var hasOptions = statViewList.First().gameObject.activeSelf || statCount + skillCount > 0;
             optionSpacer.SetActive(hasOptions);
@@ -140,7 +140,7 @@ namespace Nekoyume.UI.Module
             descriptionArea.itemDescriptionText.text = itemBase.GetLocalizedDescription();
         }
 
-        private int UpdateStatsArea(ItemBase itemBase, int itemCount)
+        private int UpdateStatsArea(ItemBase itemBase, int itemCount, bool levelLimit)
         {
             var statCount = 0;
             if (itemBase is null)
@@ -154,10 +154,11 @@ namespace Nekoyume.UI.Module
                 row.StarImages.ForEach(x => x.SetActive(false));
             }
 
-            var isUsable = Util.IsUsableItem(itemBase);
             var level = Util.GetItemRequirementLevel(itemBase);
             descriptionArea.levelLimitText.text = L10nManager.Localize("UI_REQUIRED_LEVEL", level);
-            descriptionArea.levelLimitText.color = isUsable ? Palette.GetColor(ColorType.ButtonEnabled) : Palette.GetColor(ColorType.TextDenial);
+            descriptionArea.levelLimitText.color = levelLimit
+                ? Palette.GetColor(ColorType.TextDenial)
+                : Palette.GetColor(ColorType.ButtonEnabled);
             descriptionArea.levelLimitGameObject.SetActive(level > 0);
             descriptionArea.crystalGameObject.SetActive(itemBase.ItemType == ItemType.Equipment);
 

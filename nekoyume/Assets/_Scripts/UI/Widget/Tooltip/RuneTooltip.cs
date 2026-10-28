@@ -12,6 +12,7 @@ using Nekoyume.Model.EnumType;
 using Nekoyume.Model.Mail;
 using Nekoyume.Model.Stat;
 using Nekoyume.Model.State;
+using Nekoyume.State;
 using Nekoyume.TableData;
 using Nekoyume.TableData.Rune;
 using Nekoyume.UI.Model;
@@ -126,6 +127,45 @@ namespace Nekoyume.UI
                 .AddTo(gameObject);
         }
 
+        //|||||||||||||| PANDORA START CODE |||||||||||||||||||
+        private RuneState _currentRuneState; //for copy rune info
+
+        protected override void Update()
+        {
+            base.Update();
+
+            if (!Input.GetKeyDown(KeyCode.I) || _currentRuneState is null)
+            {
+                return;
+            }
+
+            var allRuneState = States.Instance.AllRuneState;
+            if (allRuneState is null)
+            {
+                return;
+            }
+
+            var runeId = _currentRuneState.RuneId;
+            var level = _currentRuneState.Level;
+            if (allRuneState.TryGetRuneState(runeId, out var ownedRuneState))
+            {
+                var resultLevel = Math.Max(ownedRuneState.Level, level);
+                allRuneState.SetRuneState(new RuneState(runeId, resultLevel));
+                Game.Event.OnUpdateRuneState.Invoke();
+                OneLineSystem.Push(MailType.System,
+                    $"<color=green>Pandora Box</color>: Rune already owned, level set to +{resultLevel}!",
+                    NotificationCell.NotificationType.Information);
+                return;
+            }
+
+            allRuneState.AddRuneState(new RuneState(runeId, level));
+            Game.Event.OnUpdateRuneState.Invoke();
+            OneLineSystem.Push(MailType.System,
+                "<color=green>Pandora Box</color>: Rune Added to your inventory Successfully!",
+                NotificationCell.NotificationType.Information);
+        }
+        //|||||||||||||| PANDORA END CODE |||||||||||||||||||
+
         public override void Close(bool ignoreCloseAnimation = false)
         {
             _onClose?.Invoke();
@@ -140,6 +180,7 @@ namespace Nekoyume.UI
             enhancementButton.gameObject.SetActive(false);
             runeNameText.text = L10nManager.Localize($"RUNE_NAME_{runeState.RuneId}");
             currentLevelText.text = $"+{runeState.Level}";
+            _currentRuneState = runeState;
 
             var runeListSheet = Game.Game.instance.TableSheets.RuneListSheet;
             if (runeListSheet.TryGetValue(runeState.RuneId, out var row))
@@ -218,6 +259,7 @@ namespace Nekoyume.UI
             confirmButton.Text = confirm;
             runeNameText.text = L10nManager.Localize($"RUNE_NAME_{item.RuneState.RuneId}");
             currentLevelText.text = $"+{item.RuneState.Level}";
+            _currentRuneState = item.RuneState;
 
             var runeListSheet = Game.Game.instance.TableSheets.RuneListSheet;
             if (runeListSheet.TryGetValue(item.RuneState.RuneId, out var row))

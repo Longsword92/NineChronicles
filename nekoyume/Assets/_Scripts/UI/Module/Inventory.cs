@@ -336,8 +336,7 @@ namespace Nekoyume.UI.Module
                     {
                         inventoryItem = CreateInventoryItem(
                             itemBase,
-                            count,
-                            !Util.IsUsableItem(itemBase));
+                            count);
                         _consumables.Add(inventoryItem);
                     }
 
@@ -345,15 +344,13 @@ namespace Nekoyume.UI.Module
                 case ItemType.Costume:
                     inventoryItem = CreateInventoryItem(
                         itemBase,
-                        count,
-                        !Util.IsUsableItem(itemBase));
+                        count);
                     _costumes.Add(inventoryItem);
                     break;
                 case ItemType.Equipment:
                     inventoryItem = CreateInventoryItem(
                         itemBase,
-                        count,
-                        !Util.IsUsableItem(itemBase));
+                        count);
 
                     if (!_equipments.ContainsKey(itemBase.ItemSubType))
                     {

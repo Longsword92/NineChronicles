@@ -508,11 +508,6 @@ namespace Nekoyume.UI.Module
                 return;
             }
 
-            if (inventoryItem.LevelLimited.Value)
-            {
-                return;
-            }
-
             var avatarState = States.Instance.CurrentAvatarState;
             var gameConfig = States.Instance.GameConfigState;
             if (!inventoryItem.IsValid(avatarState.level, gameConfig))
@@ -887,21 +882,9 @@ namespace Nekoyume.UI.Module
 
                     if (!BattleRenderer.Instance.IsOnBattle)
                     {
-                        if (model.Equipped.Value)
-                        {
-                            // 장착된 아이템은 항상 unequip 가능 (밸리데이션 실패 여부와 관계없이)
-                            interactable = true;
-                        }
-                        else if (model.DimObjectEnabled.Value)
-                        {
-                            // 장착되지 않은 딤 처리된 아이템은 equip 불가
-                            interactable = false;
-                        }
-                        else
-                        {
-                            interactable = !model.LevelLimited.Value ||
-                                (model.LevelLimited.Value && model.Equipped.Value);
-                        }
+                        // 아이템의 레벨 제한은 무시하고 항상 장착할 수 있게 한다.
+                        // 딤 처리된 아이템(컨텐츠 규칙 위반)만 장착을 막는다.
+                        interactable = model.Equipped.Value || !model.DimObjectEnabled.Value;
                     }
 
                     submit = () => EquipOrUnequip(model);
